@@ -1,4 +1,4 @@
-from cmon2lib.taiga.taiga_user_functions import authenticate, get_authenticated_user_projects
+from cmon2lib.ctaiga.taiga_user_functions import authenticate, get_authenticated_user_projects
 from cmon2lib.utils.cmon_logging import clog
 
 

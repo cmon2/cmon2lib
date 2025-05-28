@@ -1,54 +1,55 @@
 import os
-from taiga import TaigaAPI, exceptions
+from taiga import TaigaAPI
+from taiga.exceptions import TaigaRestException
 from cmon2lib.utils.cmon_logging import clog
 
-# Use the base URL (no /api/v1/ at the end)
-TAIGA_API_URL = os.environ.get("TAIGA_API_URL", "https://api.taiga.io/")
-TAIGA_USERNAME = os.environ.get("TAIGA_USERNAME")
-TAIGA_PASSWORD = os.environ.get("TAIGA_PASSWORD")
-TAIGA_TOKEN = os.environ.get("TAIGA_TOKEN")
-
-def authenticate():
-    """Authenticate to Taiga and return the API object."""
-    api = TaigaAPI(host=TAIGA_API_URL)
+def authenticate(username, password, api_url="https://api.taiga.io/"):
+    """Authenticate to Taiga and return the API object for the given user."""
+    api = TaigaAPI(host=api_url)
     try:
-        if TAIGA_TOKEN:
-            api.auth(token=TAIGA_TOKEN)
-        elif TAIGA_USERNAME and TAIGA_PASSWORD:
-            api.auth(username=TAIGA_USERNAME, password=TAIGA_PASSWORD)
+        if username and password:
+            api.auth(username=username, password=password)
         else:
-            raise EnvironmentError("Set TAIGA_USERNAME and TAIGA_PASSWORD or TAIGA_TOKEN environment variables.")
-    except exceptions.TaigaRestException as e:
+            raise EnvironmentError("Provide username and password as function arguments.")
+    except TaigaRestException as e:
         raise RuntimeError(f"Taiga authentication failed: {e}")
     return api
 
-def get_authenticated_user():
+def get_authenticated_user(username, password, api_url="https://api.taiga.io/"):
     """
     Get the authenticated user's information and log the user ID.
+    Args:
+        username (str): Taiga username
+        password (str): Taiga password
+        api_url (str): Taiga API URL (default: public Taiga)
     Returns:
         user: The authenticated Taiga user object.
     Raises:
         RuntimeError: If authentication fails or user cannot be fetched.
     """
-    api = authenticate()
+    api = authenticate(username, password, api_url)
     try:
         user = api.me()
         clog('info', f"Authenticated user ID: {user.id}")
         return user
-    except exceptions.TaigaRestException as e:
+    except TaigaRestException as e:
         clog('error', f"Failed to get authenticated user: {e}")
         raise RuntimeError(f"Failed to get authenticated user: {e}")
 
 
-def get_authenticated_user_projects():
+def get_authenticated_user_projects(username, password, api_url="https://api.taiga.io/"):
     """
     Get the authenticated user's projects using their user ID and log the project names.
+    Args:
+        username (str): Taiga username
+        password (str): Taiga password
+        api_url (str): Taiga API URL (default: public Taiga)
     Returns:
         list: List of Taiga project objects the user is a member of.
     Raises:
         RuntimeError: If projects cannot be fetched.
     """
-    api = authenticate()
+    api = authenticate(username, password, api_url)
     try:
         user = api.me()
         page_size = 15  # Default Taiga API page size
@@ -63,13 +64,19 @@ def get_authenticated_user_projects():
         else:
             clog('warning', f"No projects found for user {user.id}.")
         return projects
-    except exceptions.TaigaRestException as e:
+    except TaigaRestException as e:
         clog('error', f"Failed to get projects for user: {e}")
         raise RuntimeError(f"Failed to get projects for user: {e}")
 
 if __name__ == "__main__":
+    # Example usage: get credentials from environment variables
+    import os
+    TAIGA_USERNAME = os.environ.get("TAIGA_USERNAME")
+    TAIGA_PASSWORD = os.environ.get("TAIGA_PASSWORD")
+    TAIGA_API_URL = os.environ.get("TAIGA_API_URL", "https://api.taiga.io/")
+
     try:
-        get_authenticated_user()
-        get_authenticated_user_projects()
+        get_authenticated_user(TAIGA_USERNAME, TAIGA_PASSWORD, TAIGA_API_URL)
+        get_authenticated_user_projects(TAIGA_USERNAME, TAIGA_PASSWORD, TAIGA_API_URL)
     except Exception as e:
         clog('error', f"Error: {e}")
