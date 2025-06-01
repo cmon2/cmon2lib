@@ -1,5 +1,6 @@
 from cmon2lib.ctaiga.taiga_user_functions import authenticate, get_authenticated_user_projects
 from cmon2lib.utils.cmon_logging import clog
+import os
 
 
 def cprint_project(project):
@@ -40,7 +41,11 @@ def cprint_project(project):
 
 if __name__ == "__main__":
     clog('info', "Fetching authenticated user projects...")
-    projects = get_authenticated_user_projects()
+    username = os.environ.get("TAIGA_USERNAME")
+    password = os.environ.get("TAIGA_PASSWORD")
+    if not username or not password:
+        raise ValueError("TAIGA_USERNAME and TAIGA_PASSWORD environment variables must be set")
+    projects = get_authenticated_user_projects(username, password)
     for project in projects:
         print(cprint_project(project))
         clog('info', f"Printed project {project.id} - {project.name}")
