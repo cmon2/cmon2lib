@@ -1,13 +1,6 @@
-import logging
+from loguru import logger
 
-# Set up a harmonized logger for cmon2lib
-logger = logging.getLogger("cmon2lib")
-logger.setLevel(logging.INFO)  # Default level, can be changed by user
-handler = logging.StreamHandler()
-formatter = logging.Formatter('[cmon2lib] %(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-handler.setFormatter(formatter)
-if not logger.hasHandlers():
-    logger.addHandler(handler)
+# Set up a harmonized logger for cmon2lib using loguru
 
 def clog(level, msg, *args, **kwargs):
     """Central logging gateway for cmon2lib. Usage: clog('info', 'message')"""
