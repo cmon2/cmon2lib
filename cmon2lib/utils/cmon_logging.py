@@ -4,7 +4,8 @@ from loguru import logger
 
 def clog(level, msg, *args, **kwargs):
     """Central logging gateway for cmon2lib. Usage: clog('info', 'message')"""
+    # Use loguru's depth=2 so the log record points to the caller of clog, not clog itself
     if hasattr(logger, level):
-        getattr(logger, level)(msg, *args, **kwargs)
+        logger.opt(depth=2).log(level.upper(), msg, *args, **kwargs)
     else:
-        logger.info(msg, *args, **kwargs)
+        logger.opt(depth=2).info(msg, *args, **kwargs)
