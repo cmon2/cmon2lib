@@ -1,7 +1,14 @@
 """
 Centralized logging for cmon2lib.
 
-Format: YYYY-MM-DD HH:mm:ss | LEVEL    | module:func:line | USER | message
+Dual-output logging:
+- Console (terminal): Just the message with color. WARNING/ERROR show level prefix.
+- File: Full format with timestamp, level, module, user, message.
+
+Console format: <message> (with color)
+Console format for WARNING/ERROR: WARN: <message> or ERR: <message>
+
+File format: YYYY-MM-DD HH:mm:ss | LEVEL    | module:func:line | USER | message
 
 Features:
 - Auto-init on first clog() call
@@ -126,7 +133,7 @@ def _cleanup_old_archives(log_dir: Path, max_age_days: int = 30):
 
 
 def _format_log_record(record: dict) -> str:
-    """Custom format function that includes USER from extra."""
+    """Custom format function that includes USER from extra (for file logging)."""
     timestamp = record["time"].strftime("%Y-%m-%d %H:%M:%S")
     level = record["level"].name.ljust(8)
     name = record["name"]
@@ -135,6 +142,30 @@ def _format_log_record(record: dict) -> str:
     user = record["extra"].get("user", "unknown")
     message = record["message"]
     return f"{timestamp} | {level} | {name}:{function}:{line} | {user} | {message}"
+
+
+def _format_console(record: dict) -> str:
+    """
+    Console format: message only with color.
+    WARNING/ERROR get a level prefix.
+    """
+    level = record["level"].name
+    message = record["message"]
+
+    if level == "WARNING":
+        return f"<yellow>WARN:</yellow> {message}"
+    elif level == "ERROR":
+        return f"<red>ERR:</red> {message}"
+    elif level == "SUCCESS":
+        return f"<green>{message}</green>"
+    elif level == "INFO":
+        return message
+    elif level == "DEBUG":
+        return f"<dim>{message}</dim>"
+    elif level == "TRACE":
+        return f"<dim>{message}</dim>"
+    else:
+        return message
 
 
 def _init_clog():
@@ -155,17 +186,18 @@ def _init_clog():
     # Create archive file
     _clog_archive.touch()
 
-    # Remove default loguru handler and add our custom one
+    # Remove default loguru handler
     logger.remove()
 
-    # Console output with our format
+    # Console output - message only with color, WARN/ERR prefixed
     logger.add(
         sys.stderr,
-        format=_format_log_record,
+        format=_format_console,
+        colorize=True,
         level="DEBUG",
     )
 
-    # File handler for archive
+    # File handler for archive - full metadata format
     logger.add(
         _clog_archive,
         format=_format_log_record,

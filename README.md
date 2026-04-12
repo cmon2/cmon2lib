@@ -6,15 +6,41 @@ Personal Python library for convenient personalized functionality.
 
 cmon2lib provides a unified logging system with cross-language compatibility (Python and Bash).
 
-### Log Format
+### Dual-Output Logging
 
+cmon2lib logs to both **console (terminal)** and **file** simultaneously:
+
+| Output | Format | When |
+|--------|--------|------|
+| **Console** | Just the message (colored) | Always |
+| Console (WARNING/ERROR) | `WARN: message` or `ERR: message` | For WARNING/ERROR |
+| **File** | Full metadata: `YYYY-MM-DD HH:mm:ss | LEVEL | module:func:line | USER | message` | Always |
+
+**Console Colors:**
+- INFO: No color (clean output)
+- DEBUG/TRACE: Dim gray
+- SUCCESS: Green
+- WARNING: Yellow + `WARN:` prefix
+- ERROR: Red + `ERR:` prefix
+
+**File Format Example:**
 ```
-YYYY-MM-DD HH:mm:ss | LEVEL    | module:func:line | USER | message
+2026-04-12 18:14:00 | INFO    | ctaiga:get_authenticated_user:33 | simon | Authenticated user ID: 123
 ```
 
-Example:
+**Console Output Example (same message):**
 ```
-2026-04-12T18:14:00 | INFO    | ctaiga:get_authenticated_user:33 | simon | Authenticated user ID: 123
+Authenticated user ID: 123
+```
+
+For WARNING:
+```
+WARN: something went wrong
+```
+
+For ERROR:
+```
+ERR: connection failed
 ```
 
 ### Python Usage

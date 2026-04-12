@@ -17,7 +17,7 @@ from pathlib import Path
 
 
 class TestFormatLogRecord:
-    """Test the log format function."""
+    """Test the log format function (file logging)."""
 
     def test_format_includes_timestamp(self):
         from cmon2lib.utils.cmon_logging import _format_log_record
@@ -64,6 +64,73 @@ class TestFormatLogRecord:
         formatted = _format_log_record(record)
         # Should have 4 pipe delimiters (5 fields)
         assert formatted.count(" | ") == 4
+
+    def test_file_format_differs_from_console_format(self):
+        """Verify file format includes metadata that console format omits."""
+        from cmon2lib.utils.cmon_logging import _format_log_record, _format_console
+
+        class MockLevel:
+            name = "INFO"
+
+        record = {
+            "time": datetime(2026, 4, 12, 18, 14, 0),
+            "level": MockLevel(),
+            "name": "test_module",
+            "function": "test_func",
+            "line": 42,
+            "extra": {"user": "testuser"},
+            "message": "test message",
+        }
+
+        file_formatted = _format_log_record(record)
+        console_formatted = _format_console(record)
+
+        # File format should have timestamp, level, module, user
+        assert "2026-04-12 18:14:00" in file_formatted
+        assert "INFO" in file_formatted
+        assert "testuser" in file_formatted
+
+        # Console format should just be the message
+        assert console_formatted == "test message"
+
+        # They should be different
+        assert file_formatted != console_formatted
+
+    def test_console_format_for_warning_has_prefix(self):
+        """Console format for WARNING should include WARN: prefix."""
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "WARNING"
+
+        record = {
+            "level": MockLevel(),
+            "message": "something went wrong",
+        }
+
+        formatted = _format_console(record)
+        # Should have WARN: prefix
+        assert "WARN:" in formatted
+        # Message should be present
+        assert "something went wrong" in formatted
+
+    def test_console_format_for_error_has_prefix(self):
+        """Console format for ERROR should include ERR: prefix."""
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "ERROR"
+
+        record = {
+            "level": MockLevel(),
+            "message": "connection failed",
+        }
+
+        formatted = _format_console(record)
+        # Should have ERR: prefix
+        assert "ERR:" in formatted
+        # Message should be present
+        assert "connection failed" in formatted
 
 
 class TestWriteToSummary:
@@ -285,3 +352,96 @@ class TestClogException:
             exception = e
             result = f"{msg}: {type(exception).__name__}: {exception}"
             assert result == "Operation failed: ValueError: test error"
+
+
+class TestFormatConsole:
+    """Test the console format function (dual-output)."""
+
+    def test_warning_gets_warn_prefix(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "WARNING"
+
+        record = {
+            "level": MockLevel(),
+            "message": "something went wrong",
+        }
+
+        formatted = _format_console(record)
+        assert "WARN:" in formatted
+        assert "something went wrong" in formatted
+
+    def test_error_gets_err_prefix(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "ERROR"
+
+        record = {
+            "level": MockLevel(),
+            "message": "connection failed",
+        }
+
+        formatted = _format_console(record)
+        assert "ERR:" in formatted
+        assert "connection failed" in formatted
+
+    def test_info_just_message(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "INFO"
+
+        record = {
+            "level": MockLevel(),
+            "message": "simple info",
+        }
+
+        formatted = _format_console(record)
+        assert formatted == "simple info"
+
+    def test_debug_just_message_with_dim(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "DEBUG"
+
+        record = {
+            "level": MockLevel(),
+            "message": "debug info",
+        }
+
+        formatted = _format_console(record)
+        # DEBUG gets dim color markup
+        assert "<dim>debug info</dim>" == formatted
+
+    def test_success_just_message_with_green(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "SUCCESS"
+
+        record = {
+            "level": MockLevel(),
+            "message": "operation complete",
+        }
+
+        formatted = _format_console(record)
+        # SUCCESS gets green color markup
+        assert "<green>operation complete</green>" == formatted
+
+    def test_trace_just_message_with_dim(self):
+        from cmon2lib.utils.cmon_logging import _format_console
+
+        class MockLevel:
+            name = "TRACE"
+
+        record = {
+            "level": MockLevel(),
+            "message": "trace details",
+        }
+
+        formatted = _format_console(record)
+        # TRACE gets dim color markup
+        assert "<dim>trace details</dim>" == formatted
