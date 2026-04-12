@@ -176,3 +176,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# clog output directories (created at runtime)
+_clog/
+*/_clog/
+*/*/_clog/
