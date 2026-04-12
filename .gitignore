@@ -26,6 +26,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Allow cmon2lib/utils/lib/ but ignore generic lib/
+# (handled by specific path below)
+!cmon2lib/utils/lib/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

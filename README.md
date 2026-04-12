@@ -43,10 +43,10 @@ For ERROR:
 ERR: connection failed
 ```
 
-### Python Usage
+### Python Usage (clog)
 
 ```python
-from cmon2lib.utils.cmon_logging import clog
+from cmon2lib import clog
 
 # Basic logging
 clog('info', 'message')
@@ -58,6 +58,27 @@ try:
 except ValueError as e:
     clog('error', 'Operation failed', exception=e)
 # Output: Operation failed: ValueError: test error
+
+# Log levels: trace, debug, info, success, warning, error, critical
+clog('warning', 'Something might be wrong')
+clog('success', 'Operation completed')
+```
+
+### Python Usage (cprint - Rich UI Output)
+
+```python
+from cmon2lib import cprint
+
+# Rich console output - no file logging
+# Supports Rich markup tags for colors and formatting
+cprint('info', '[green]✓[/green] Item synced successfully')
+cprint('info', '[cyan]Source:[/cyan] {}", source_name)
+cprint('warning', '[yellow]![/yellow] Something may be wrong')
+cprint('error', '[red]✗[/red] Operation failed')
+
+# cprint is for UI output (trees, tables, formatted messages)
+# clog is for operational logs (process info, errors, warnings)
+```
 ```
 
 ### Bash Usage
@@ -109,6 +130,17 @@ Archive logs older than 30 days are automatically deleted on initialization.
 - Single-line exception formatting
 - Age-based cleanup (30 days for archives)
 - No external dependencies (uses loguru for Python)
+
+### Module Structure
+
+```
+cmon2lib/utils/
+├── lib/
+│   ├── cmon_collect_metadata.py   # User, module, caller info collection
+│   └── cmon_logging_formatters.py # Log format functions (console, file)
+├── cmon_logging_clog.py          # clog() - file + console logging
+└── cmon_logging_cprint.py        # cprint() - Rich console output
+```
 
 ## Modules
 

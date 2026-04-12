@@ -3,7 +3,8 @@
 Utility functions for open webui function implementation.
 """
 
-from cmon2lib.utils.cmon_logging import clog
+from cmon2lib.utils.cmon_logging_clog import clog
+
 
 def inject_string_into_system_message(body, s, prefix=""):
     """

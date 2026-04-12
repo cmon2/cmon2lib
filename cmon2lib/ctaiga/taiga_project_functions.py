@@ -1,5 +1,8 @@
-from cmon2lib.ctaiga.taiga_user_functions import authenticate, get_authenticated_user_projects
-from cmon2lib.utils.cmon_logging import clog
+from cmon2lib.ctaiga.taiga_user_functions import (
+    authenticate,
+    get_authenticated_user_projects,
+)
+from cmon2lib.utils.cmon_logging_clog import clog
 import os
 
 
@@ -19,7 +22,7 @@ def cprint_project(project):
     Returns:
         str: A formatted string with statuses and their user stories.
     """
-    clog('info', f"Formatting project {project.id} - {project.name}")
+    clog("info", f"Formatting project {project.id} - {project.name}")
     result = [f"\n=== Project: {project.id} | {project.name} ==="]
     statuses = project.list_user_story_statuses()
     user_stories = project.list_user_stories()
@@ -36,16 +39,22 @@ def cprint_project(project):
         for story in stories:
             result.append(f"    • {story.id}: {story.subject}")
         if not stories:
-            clog('debug', f"No user stories for status '{status.name}' in project {project.id}")
+            clog(
+                "debug",
+                f"No user stories for status '{status.name}' in project {project.id}",
+            )
     return "\n".join(result)
 
+
 if __name__ == "__main__":
-    clog('info', "Fetching authenticated user projects...")
+    clog("info", "Fetching authenticated user projects...")
     username = os.environ.get("TAIGA_USERNAME")
     password = os.environ.get("TAIGA_PASSWORD")
     if not username or not password:
-        raise ValueError("TAIGA_USERNAME and TAIGA_PASSWORD environment variables must be set")
+        raise ValueError(
+            "TAIGA_USERNAME and TAIGA_PASSWORD environment variables must be set"
+        )
     projects = get_authenticated_user_projects(username, password)
     for project in projects:
         print(cprint_project(project))
-        clog('info', f"Printed project {project.id} - {project.name}")
+        clog("info", f"Printed project {project.id} - {project.name}")

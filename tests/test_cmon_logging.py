@@ -20,7 +20,7 @@ class TestFormatLogRecord:
     """Test the log format function (file logging)."""
 
     def test_format_includes_timestamp(self):
-        from cmon2lib.utils.cmon_logging import _format_log_record
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_log_record
 
         # Use a simple object that mimics loguru's record structure
         class MockLevel:
@@ -36,7 +36,7 @@ class TestFormatLogRecord:
             "message": "test message",
         }
 
-        formatted = _format_log_record(record)
+        formatted = format_log_record(record)
         assert "2026-04-12 18:14:00" in formatted
         assert "INFO" in formatted
         assert "test_module" in formatted
@@ -46,7 +46,7 @@ class TestFormatLogRecord:
         assert "test message" in formatted
 
     def test_format_uses_pipe_delimiter(self):
-        from cmon2lib.utils.cmon_logging import _format_log_record
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_log_record
 
         class MockLevel:
             name = "DEBUG"
@@ -61,13 +61,16 @@ class TestFormatLogRecord:
             "message": "msg",
         }
 
-        formatted = _format_log_record(record)
+        formatted = format_log_record(record)
         # Should have 4 pipe delimiters (5 fields)
         assert formatted.count(" | ") == 4
 
     def test_file_format_differs_from_console_format(self):
         """Verify file format includes metadata that console format omits."""
-        from cmon2lib.utils.cmon_logging import _format_log_record, _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import (
+            format_log_record,
+            format_console,
+        )
 
         class MockLevel:
             name = "INFO"
@@ -82,8 +85,8 @@ class TestFormatLogRecord:
             "message": "test message",
         }
 
-        file_formatted = _format_log_record(record)
-        console_formatted = _format_console(record)
+        file_formatted = format_log_record(record)
+        console_formatted = format_console(record)
 
         # File format should have timestamp, level, module, user
         assert "2026-04-12 18:14:00" in file_formatted
@@ -98,7 +101,7 @@ class TestFormatLogRecord:
 
     def test_console_format_for_warning_has_prefix(self):
         """Console format for WARNING should include WARN: prefix."""
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "WARNING"
@@ -108,7 +111,7 @@ class TestFormatLogRecord:
             "message": "something went wrong",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         # Should have WARN: prefix
         assert "WARN:" in formatted
         # Message should be present
@@ -116,7 +119,7 @@ class TestFormatLogRecord:
 
     def test_console_format_for_error_has_prefix(self):
         """Console format for ERROR should include ERR: prefix."""
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "ERROR"
@@ -126,7 +129,7 @@ class TestFormatLogRecord:
             "message": "connection failed",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         # Should have ERR: prefix
         assert "ERR:" in formatted
         # Message should be present
@@ -137,12 +140,12 @@ class TestWriteToSummary:
     """Test summary log writing."""
 
     def test_writes_info_to_summary(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _write_to_summary
+        from cmon2lib.utils.cmon_logging_clog import _write_to_summary
 
         summary_file = tmp_path / "test_csummary.log"
 
         # Mock globals
-        import cmon2lib.utils.cmon_logging as clog_mod
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         old_summary = clog_mod._clog_summary
         clog_mod._clog_summary = summary_file
@@ -157,11 +160,11 @@ class TestWriteToSummary:
             clog_mod._clog_summary = old_summary
 
     def test_writes_error_to_summary(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _write_to_summary
+        from cmon2lib.utils.cmon_logging_clog import _write_to_summary
 
         summary_file = tmp_path / "test_csummary.log"
 
-        import cmon2lib.utils.cmon_logging as clog_mod
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         old_summary = clog_mod._clog_summary
         clog_mod._clog_summary = summary_file
@@ -176,11 +179,11 @@ class TestWriteToSummary:
             clog_mod._clog_summary = old_summary
 
     def test_writes_success_to_summary(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _write_to_summary
+        from cmon2lib.utils.cmon_logging_clog import _write_to_summary
 
         summary_file = tmp_path / "test_csummary.log"
 
-        import cmon2lib.utils.cmon_logging as clog_mod
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         old_summary = clog_mod._clog_summary
         clog_mod._clog_summary = summary_file
@@ -199,12 +202,12 @@ class TestRenameArchive:
     """Test archive renaming for WARN/ERR."""
 
     def test_renames_to_warn(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _rename_archive
+        from cmon2lib.utils.cmon_logging_clog import _rename_archive
 
         archive_file = tmp_path / "20260412_test.log"
         archive_file.touch()
 
-        import cmon2lib.utils.cmon_logging as clog_mod
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         old_archive = clog_mod._clog_archive
         old_renamed = clog_mod._clog_archive_renamed
@@ -223,12 +226,12 @@ class TestRenameArchive:
             clog_mod._clog_archive_renamed = old_renamed
 
     def test_renames_to_err(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _rename_archive
+        from cmon2lib.utils.cmon_logging_clog import _rename_archive
 
         archive_file = tmp_path / "20260412_test.log"
         archive_file.touch()
 
-        import cmon2lib.utils.cmon_logging as clog_mod
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         old_archive = clog_mod._clog_archive
         old_renamed = clog_mod._clog_archive_renamed
@@ -251,8 +254,8 @@ class TestCleanupOldArchives:
     """Test age-based cleanup."""
 
     def test_deletes_old_archives(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _cleanup_old_archives
-        import cmon2lib.utils.cmon_logging as clog_mod
+        from cmon2lib.utils.cmon_logging_clog import _cleanup_old_archives
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         # Create old archive
         old_archive = tmp_path / "20200101_test.log"
@@ -277,8 +280,8 @@ class TestCleanupOldArchives:
             clog_mod._clog_archive = old_archive_global
 
     def test_preserves_warn_logs(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _cleanup_old_archives
-        import cmon2lib.utils.cmon_logging as clog_mod
+        from cmon2lib.utils.cmon_logging_clog import _cleanup_old_archives
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         # Create old WARN archive
         old_warn = tmp_path / "20200101_test_WARN.log"
@@ -297,8 +300,8 @@ class TestCleanupOldArchives:
             clog_mod._clog_archive = old_archive_global
 
     def test_preserves_err_logs(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _cleanup_old_archives
-        import cmon2lib.utils.cmon_logging as clog_mod
+        from cmon2lib.utils.cmon_logging_clog import _cleanup_old_archives
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         # Create old ERR archive
         old_err = tmp_path / "20200101_test_ERR.log"
@@ -317,8 +320,8 @@ class TestCleanupOldArchives:
             clog_mod._clog_archive = old_archive_global
 
     def test_preserves_summary_logs(self, tmp_path):
-        from cmon2lib.utils.cmon_logging import _cleanup_old_archives
-        import cmon2lib.utils.cmon_logging as clog_mod
+        from cmon2lib.utils.cmon_logging_clog import _cleanup_old_archives
+        import cmon2lib.utils.cmon_logging_clog as clog_mod
 
         # Create old summary
         old_summary = tmp_path / "test_csummary.log"
@@ -345,7 +348,7 @@ class TestClogException:
         try:
             raise ValueError("test error")
         except ValueError as e:
-            from cmon2lib.utils.cmon_logging import _clog
+            from cmon2lib.utils.cmon_logging_clog import _clog
 
             # Build message with exception - same as clog does
             msg = "Operation failed"
@@ -358,7 +361,7 @@ class TestFormatConsole:
     """Test the console format function (dual-output)."""
 
     def test_warning_gets_warn_prefix(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "WARNING"
@@ -368,12 +371,12 @@ class TestFormatConsole:
             "message": "something went wrong",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         assert "WARN:" in formatted
         assert "something went wrong" in formatted
 
     def test_error_gets_err_prefix(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "ERROR"
@@ -383,12 +386,12 @@ class TestFormatConsole:
             "message": "connection failed",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         assert "ERR:" in formatted
         assert "connection failed" in formatted
 
     def test_info_just_message(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "INFO"
@@ -398,11 +401,11 @@ class TestFormatConsole:
             "message": "simple info",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         assert formatted == "simple info"
 
     def test_debug_just_message_with_dim(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "DEBUG"
@@ -412,12 +415,12 @@ class TestFormatConsole:
             "message": "debug info",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         # DEBUG gets dim color markup
         assert "<dim>debug info</dim>" == formatted
 
     def test_success_just_message_with_green(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "SUCCESS"
@@ -427,12 +430,12 @@ class TestFormatConsole:
             "message": "operation complete",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         # SUCCESS gets green color markup
         assert "<green>operation complete</green>" == formatted
 
     def test_trace_just_message_with_dim(self):
-        from cmon2lib.utils.cmon_logging import _format_console
+        from cmon2lib.utils.lib.cmon_logging_formatters import format_console
 
         class MockLevel:
             name = "TRACE"
@@ -442,6 +445,31 @@ class TestFormatConsole:
             "message": "trace details",
         }
 
-        formatted = _format_console(record)
+        formatted = format_console(record)
         # TRACE gets dim color markup
         assert "<dim>trace details</dim>" == formatted
+
+
+class TestCprint:
+    """Test cprint function (console-only Rich output)."""
+
+    def test_cprint_is_callable(self):
+        """cprint should be callable and not raise."""
+        from cmon2lib import cprint
+
+        # Should not raise (outputs to console)
+        cprint("info", "test message")
+
+    def test_cprint_with_format_args(self):
+        """cprint should support format arguments."""
+        from cmon2lib import cprint
+
+        # Should not raise
+        cprint("info", "value: {}", 42)
+
+    def test_cprint_with_rich_markup(self):
+        """cprint should pass through Rich markup."""
+        from cmon2lib import cprint
+
+        # Should not raise - Rich markup passed through
+        cprint("info", "[green]✓[/green] Success")
