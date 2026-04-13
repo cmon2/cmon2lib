@@ -169,9 +169,17 @@ def _cleanup_old_archives(log_dir: Path, max_age_days: int = 30):
 
 
 def _write_to_summary(level: str, msg: str):
-    """Write INFO, SUCCESS, or ERROR messages to summary log (DEPRECATED - kept for compatibility)."""
-    # Summary is now redundant since all logs go to single archive
-    pass
+    """Write INFO, SUCCESS, or ERROR messages to summary log (persistent across runs)."""
+    if _clog_summary:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        module, func, line = get_caller_info()
+        user = get_user()
+        level_padded = f"{level: <8}"
+        summary_line = (
+            f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg}\n"
+        )
+        with open(_clog_summary, "a") as f:
+            f.write(summary_line)
 
 
 def _rename_archive(level: str):
@@ -254,8 +262,11 @@ def _clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
 
     logger.bind(user=get_user()).opt(depth=2).log(level_upper, msg)
 
-    # Note: _write_to_summary and _rename_archive are deprecated
-    # All logs now go to single archive file only
+    if level_upper in {"INFO", "SUCCESS", "ERROR"}:
+        if _clog_summary:
+            _write_to_summary(level_upper, msg)
+
+    # Note: _rename_archive is deprecated - no longer creates separate files
 
 
 def clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
