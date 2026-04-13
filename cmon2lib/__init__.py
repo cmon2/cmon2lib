@@ -1,4 +1,4 @@
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 from .utils.cmon_logging_clog import clog, init_clog
 from .utils.cmon_logging_cprint import cprint
