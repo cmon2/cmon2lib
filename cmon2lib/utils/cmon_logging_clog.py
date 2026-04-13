@@ -10,8 +10,8 @@ Features:
 - File logging to _clog/ directory
 - Archive log (rotated by time)
 - Summary log (INFO, SUCCESS, ERROR only)
-- WARN/ERROR archive renaming
-- Age-based cleanup (archives older than 30 days deleted, except _WARN/_ERR/_csummary)
+- ERROR archive renaming to *_ERR.log (for git attention)
+- Age-based cleanup (archives older than 30 days deleted, except _ERR/_csummary)
 - Exception formatting (single-line)
 """
 
@@ -112,8 +112,7 @@ def _ensure_gitignore(log_dir: Path):
 # Ignore clog summary logs
 *_csummary.log
 
-# Explicitly track WARN and ERR logs (overrides the 20*.log ignore)
-!*_WARN.log
+# Explicitly track error logs (overrides the *.log ignore)
 !*_ERR.log
 """)
 
@@ -141,15 +140,14 @@ def _cleanup_old_archives(log_dir: Path, max_age_days: int = 30):
     Delete archive log files older than max_age_days.
 
     Protected files (never deleted):
-    - *_WARN.log
-    - *_ERR.log
-    - *_csummary.log
+    - *_ERR.log (error logs persist forever for git attention)
+    - *_csummary.log (summary logs persist forever)
     """
     if not log_dir.exists():
         return
 
     cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
-    protected_patterns = ("_WARN.log", "_ERR.log", "_csummary.log")
+    protected_patterns = ("_ERR.log", "_csummary.log")
 
     for log_file in log_dir.glob("*.log"):
         if log_file.name.endswith(protected_patterns):
@@ -182,13 +180,12 @@ def _write_to_summary(level: str, msg: str):
             f.write(summary_line)
 
 
-def _rename_archive(level: str):
-    """Rename archive to include WARN or ERR suffix for git attention."""
+def _rename_archive():
+    """Rename archive to include ERR suffix for git attention."""
     global _clog_archive, _clog_archive_renamed
 
     if _clog_archive and _clog_archive.exists() and not _clog_archive_renamed:
-        suffix = "WARN" if level == "WARNING" else "ERR"
-        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_{suffix}.log"
+        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_ERR.log"
         _clog_archive.rename(new_archive)
         _clog_archive = new_archive
         _clog_archive_renamed = True
@@ -272,8 +269,8 @@ def _clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
         if _clog_summary:
             _write_to_summary(level_upper, msg)
 
-    if level_upper in {"WARNING", "ERROR"} and not _clog_archive_renamed:
-        _rename_archive(level_upper)
+    if level_upper == "ERROR" and not _clog_archive_renamed:
+        _rename_archive()
 
 
 def clog(level: str, msg: str, *args, exception: Optional[Exception] = None):

@@ -24,12 +24,13 @@ The `clog()` function provides dual-output logging:
 - **Content**: INFO, SUCCESS, ERROR levels only (DEBUG/TRACE/WARNING excluded)
 - **Behavior**: Appends to existing file, never rotates or cleans
 
-### 3. Error/Warn Rename
+### 3. Error Rename (on ERROR only)
 - **Purpose**: Flag errors for git attention (unignored via `!*_ERR.log`)
-- **Trigger**: When WARNING or ERROR is logged
-- **Behavior**: Archive file renamed with `_WARN` or `_ERR` suffix
+- **Trigger**: When ERROR is logged
+- **Behavior**: Archive file renamed with `_ERR` suffix
 - **Example**: `20260413_143421_cmon_logging_clog.log` → `20260413_143421_cmon_logging_clog_ERR.log`
-- **Note**: Only happens once per run, first ERROR/WARNING triggers rename
+- **Note**: Only happens once per run, first ERROR triggers rename
+- **Persistence**: ERROR-renamed archives persist forever (never auto-deleted)
 
 ## Log Directory Resolution
 
@@ -53,14 +54,12 @@ The `clog()` function provides dual-output logging:
 
 # Track errors (catch attention)
 !*_ERR.log
-!*_WARN.log
 ```
 
 ## Cleanup
 
 - Archives older than 30 days deleted, except:
-  - `*_WARN.log`
-  - `*_ERR.log`
+  - `*_ERR.log` (error archives persist forever)
   - `*_csummary.log`
 
 ## Log Levels
@@ -71,6 +70,6 @@ The `clog()` function provides dual-output logging:
 | DEBUG | Dim message | ✓ | ✗ |
 | INFO | Plain message | ✓ | ✓ |
 | SUCCESS | Green message | ✓ | ✓ |
-| WARNING | `WARN:` prefix | ✓ | ✗ (triggers rename) |
-| ERROR | `ERR:` prefix | ✓ | ✓ (triggers rename) |
+| WARNING | `WARN:` prefix | ✓ | ✗ |
+| ERROR | `ERR:` prefix | ✓ | ✓ (triggers ERR rename) |
 | CRITICAL | `CRIT:` prefix | ✓ | ✓ |
