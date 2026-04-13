@@ -221,12 +221,13 @@ def _init_clog():
         level="DEBUG",
     )
 
-    # File: full metadata format (colorize=False to avoid color tag parsing on function names)
+    # File: static format string (can't use {function} due to Loguru color parsing bug with <module>)
+    # rotation='100 years' instead of False (Loguru bug with rotation=False causes message filtering)
     logger.add(
         _clog_archive,
-        format=format_log_record,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level:8} | {name}:{line} | {extra[user]} | {message}",
         level="DEBUG",
-        rotation=False,
+        rotation="100 years",
         retention=None,
         compression=None,
         colorize=False,

@@ -50,15 +50,17 @@ When ERROR is logged, the archive file is renamed to draw git attention:
 The format is identical for archive and summary logs:
 
 ```
-{timestamp} | {level:8} | {module}:{func}:{line} | {user} | {message}
+{timestamp} | {level:8} | {name}:{line} | {user} | {message}
 ```
 
 **Timestamp format**: `YYYY-MM-DD HH:mm:ss` (24-hour, zero-padded)
 
 **Example**:
 ```
-2026-04-13 14:34:21 | INFO    | ctaiga:get_authenticated_user:33 | simon | Authenticated user ID: 123
+2026-04-13 14:34:21 | INFO    | __main__:33 | simon | Authenticated user ID: 123
 ```
+
+**Note**: The file format uses `{name}` (module name) and `{line}` (line number). The function name is not included in the file format due to Loguru color parsing limitations with angle brackets in function names like `<module>`.
 
 ## Console Output Format
 
