@@ -183,9 +183,15 @@ def _write_to_summary(level: str, msg: str):
 
 
 def _rename_archive(level: str):
-    """Rename archive to include WARN or ERR suffix (DEPRECATED - kept for compatibility)."""
-    # No longer creates separate files - all logs go to single archive
-    pass
+    """Rename archive to include WARN or ERR suffix for git attention."""
+    global _clog_archive, _clog_archive_renamed
+
+    if _clog_archive and _clog_archive.exists() and not _clog_archive_renamed:
+        suffix = "WARN" if level == "WARNING" else "ERR"
+        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_{suffix}.log"
+        _clog_archive.rename(new_archive)
+        _clog_archive = new_archive
+        _clog_archive_renamed = True
 
 
 # =============================================================================
@@ -266,7 +272,8 @@ def _clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
         if _clog_summary:
             _write_to_summary(level_upper, msg)
 
-    # Note: _rename_archive is deprecated - no longer creates separate files
+    if level_upper in {"WARNING", "ERROR"} and not _clog_archive_renamed:
+        _rename_archive(level_upper)
 
 
 def clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
