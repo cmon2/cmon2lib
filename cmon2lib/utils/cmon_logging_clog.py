@@ -37,6 +37,27 @@ _clog_dir = None
 _clog_archive = None
 _clog_summary = None
 _clog_archive_renamed = False
+_custom_log_dir = None  # Optional custom log directory path
+
+
+# =============================================================================
+# INIT FUNCTION
+# =============================================================================
+
+
+def init_clog(log_dir: Optional[str] = None):
+    """
+    Initialize clog with a custom log directory.
+
+    Args:
+        log_dir: Optional path to directory for _clog/ logs.
+                 If not provided, logs are written next to the calling script.
+    """
+    global _clog_initialized, _custom_log_dir
+
+    if log_dir is not None:
+        _custom_log_dir = Path(log_dir)
+        _clog_initialized = False  # Force re-init with new directory
 
 
 # =============================================================================
@@ -46,12 +67,43 @@ _clog_archive_renamed = False
 
 def _get_log_dir() -> Path:
     """Get the _clog directory for the calling module."""
-    frame = sys._getframe(2)
+    # Use custom log directory if set, otherwise derive from caller
+    if _custom_log_dir is not None:
+        log_dir = _custom_log_dir / "_clog"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        _ensure_gitignore(log_dir)
+        return log_dir
+
+    # Walk up frames to find the actual user script (skip cmon2lib internals)
+    # Frame 0 = _get_log_dir, 1 = _init_clog, 2 = _clog, 3 = clog (if direct), 4+ = user script
+    for depth in range(2, 10):
+        try:
+            frame = sys._getframe(depth)
+            module_file = frame.f_code.co_filename
+            # Skip if inside cmon2lib package
+            if "cmon2lib" in Path(module_file).parts:
+                continue
+            # Found a frame outside cmon2lib
+            module_dir = Path(module_file).parent
+            log_dir = module_dir / "_clog"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            _ensure_gitignore(log_dir)
+            return log_dir
+        except ValueError:
+            break
+
+    # Fallback: use module where clog was called from
+    frame = sys._getframe(3)
     module_file = frame.f_code.co_filename
     module_dir = Path(module_file).parent
     log_dir = module_dir / "_clog"
     log_dir.mkdir(parents=True, exist_ok=True)
+    _ensure_gitignore(log_dir)
+    return log_dir
 
+
+def _ensure_gitignore(log_dir: Path):
+    """Ensure .gitignore exists in log directory."""
     gitignore = log_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("""# Ignore clog archive logs (they start with 20XX for the year)
@@ -64,7 +116,6 @@ def _get_log_dir() -> Path:
 !*_WARN.log
 !*_ERR.log
 """)
-    return log_dir
 
 
 def _get_archive_name(module_name: str) -> Path:
