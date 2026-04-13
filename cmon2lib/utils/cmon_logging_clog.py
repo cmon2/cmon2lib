@@ -169,29 +169,15 @@ def _cleanup_old_archives(log_dir: Path, max_age_days: int = 30):
 
 
 def _write_to_summary(level: str, msg: str):
-    """Write INFO, SUCCESS, or ERROR messages to summary log."""
-    if _clog_summary:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        module, func, line = get_caller_info()
-        user = get_user()
-        level_padded = f"{level: <8}"
-        summary_line = (
-            f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg}\n"
-        )
-        with open(_clog_summary, "a") as f:
-            f.write(summary_line)
+    """Write INFO, SUCCESS, or ERROR messages to summary log (DEPRECATED - kept for compatibility)."""
+    # Summary is now redundant since all logs go to single archive
+    pass
 
 
 def _rename_archive(level: str):
-    """Rename archive to include WARN or ERR suffix."""
-    global _clog_archive, _clog_archive_renamed
-
-    if _clog_archive and _clog_archive.exists() and not _clog_archive_renamed:
-        suffix = "WARN" if level == "WARNING" else "ERR"
-        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_{suffix}.log"
-        _clog_archive.rename(new_archive)
-        _clog_archive = new_archive
-        _clog_archive_renamed = True
+    """Rename archive to include WARN or ERR suffix (DEPRECATED - kept for compatibility)."""
+    # No longer creates separate files - all logs go to single archive
+    pass
 
 
 # =============================================================================
@@ -224,7 +210,7 @@ def _init_clog():
         level="DEBUG",
     )
 
-    # File: full metadata format
+    # File: full metadata format (colorize=False to avoid color tag parsing on function names)
     logger.add(
         _clog_archive,
         format=format_log_record,
@@ -232,6 +218,7 @@ def _init_clog():
         rotation=False,
         retention=None,
         compression=None,
+        colorize=False,
     )
 
     _clog_initialized = True
@@ -267,12 +254,8 @@ def _clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
 
     logger.bind(user=get_user()).opt(depth=2).log(level_upper, msg)
 
-    if level_upper in {"INFO", "SUCCESS", "ERROR"}:
-        if _clog_summary and _clog_summary.exists():
-            _write_to_summary(level_upper, msg)
-
-    if level_upper in {"WARNING", "ERROR"} and not _clog_archive_renamed:
-        _rename_archive(level_upper)
+    # Note: _write_to_summary and _rename_archive are deprecated
+    # All logs now go to single archive file only
 
 
 def clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
