@@ -37,9 +37,11 @@ def format_console(record: dict) -> str:
     message = record["message"]
 
     if level == "WARNING":
-        return f"<yellow>WARN:</yellow> {message}"
+        return f"<yellow>WARNING:</yellow> {message}"
     elif level == "ERROR":
-        return f"<red>ERR:</red> {message}"
+        return f"<red>ERROR:</red> {message}"
+    elif level == "CRITICAL":
+        return f"<red>CRITICAL:</red> {message}"
     elif level == "SUCCESS":
         return f"<green>{message}</green>"
     elif level == "INFO":

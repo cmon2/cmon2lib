@@ -10,8 +10,8 @@ Features:
 - File logging to _clog/ directory
 - Archive log (rotated by time)
 - Summary log (INFO, SUCCESS, ERROR only)
-- ERROR archive renaming to *_ERR.log (for git attention)
-- Age-based cleanup (archives older than 30 days deleted, except _ERR/_csummary)
+- ERROR archive renaming to *_ERROR.log (for git attention)
+- Age-based cleanup (archives older than 30 days deleted, except _ERROR/_csummary)
 - Exception formatting (single-line)
 """
 
@@ -113,7 +113,7 @@ def _ensure_gitignore(log_dir: Path):
 *_csummary.log
 
 # Explicitly track error logs (overrides the *.log ignore)
-!*_ERR.log
+!*_ERROR.log
 """)
 
 
@@ -140,14 +140,14 @@ def _cleanup_old_archives(log_dir: Path, max_age_days: int = 30):
     Delete archive log files older than max_age_days.
 
     Protected files (never deleted):
-    - *_ERR.log (error logs persist forever for git attention)
+    - *_ERROR.log (error logs persist forever for git attention)
     - *_csummary.log (summary logs persist forever)
     """
     if not log_dir.exists():
         return
 
     cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
-    protected_patterns = ("_ERR.log", "_csummary.log")
+    protected_patterns = ("_ERROR.log", "_csummary.log")
 
     for log_file in log_dir.glob("*.log"):
         if log_file.name.endswith(protected_patterns):
@@ -185,7 +185,7 @@ def _rename_archive():
     global _clog_archive, _clog_archive_renamed
 
     if _clog_archive and _clog_archive.exists() and not _clog_archive_renamed:
-        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_ERR.log"
+        new_archive = _clog_archive.parent / f"{_clog_archive.stem}_ERROR.log"
         _clog_archive.rename(new_archive)
         _clog_archive = new_archive
         _clog_archive_renamed = True
