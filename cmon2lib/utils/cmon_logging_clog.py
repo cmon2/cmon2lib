@@ -27,6 +27,16 @@ from loguru import logger
 from .lib import get_user, get_module_name, get_caller_info
 from .lib import format_log_record, format_console
 
+# Attempt to import ulid for trace_id generation
+try:
+    import ulid
+
+    _ULID_AVAILABLE = True
+except ImportError:
+    import uuid
+
+    _ULID_AVAILABLE = False
+
 
 # =============================================================================
 # GLOBAL STATE
@@ -38,6 +48,7 @@ _clog_archive = None
 _clog_summary = None
 _clog_archive_renamed = False
 _custom_log_dir = None  # Optional custom log directory path
+_cmon_trace = None  # Trace ID for log correlation across scripts
 
 
 # =============================================================================
@@ -58,6 +69,32 @@ def init_clog(log_dir: Optional[str] = None):
     if log_dir is not None:
         _custom_log_dir = Path(log_dir)
         _clog_initialized = False  # Force re-init with new directory
+
+
+def _ensure_trace_id():
+    """
+    Ensure a trace_id exists for log correlation.
+
+    If cmon-trace env var is set, use it. Otherwise, generate a ULID
+    (or UUID fallback) and export it to the environment.
+    """
+    global _cmon_trace
+
+    if _cmon_trace is not None:
+        return  # Already set
+
+    # Check environment first
+    env_trace = os.environ.get("cmon-trace")
+    if env_trace:
+        _cmon_trace = env_trace
+    else:
+        # Generate new trace_id
+        if _ULID_AVAILABLE:
+            _cmon_trace = ulid.ulid()
+        else:
+            _cmon_trace = str(uuid.uuid4())
+        # Export for child processes
+        os.environ["cmon-trace"] = _cmon_trace
 
 
 # =============================================================================
@@ -173,9 +210,8 @@ def _write_to_summary(level: str, msg: str):
         module, func, line = get_caller_info()
         user = get_user()
         level_padded = f"{level: <8}"
-        summary_line = (
-            f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg}\n"
-        )
+        # trace_id at end of line for log correlation
+        summary_line = f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg} | cmon-trace={_cmon_trace}\n"
         with open(_clog_summary, "a") as f:
             f.write(summary_line)
 
@@ -203,6 +239,9 @@ def _init_clog():
     if _clog_initialized:
         return
 
+    # Ensure trace_id exists before any logging
+    _ensure_trace_id()
+
     module_name = get_module_name()
     _clog_dir = _get_log_dir()
     _clog_archive = _get_archive_name(module_name)
@@ -223,9 +262,10 @@ def _init_clog():
 
     # File: static format string (can't use {function} due to Loguru color parsing bug with <module>)
     # rotation='100 years' instead of False (Loguru bug with rotation=False causes message filtering)
+    # trace_id at end of line for log correlation
     logger.add(
         _clog_archive,
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level:8} | {name}:{line} | {extra[user]} | {message}",
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level:8} | {name}:{line} | {extra[user]} | {message} | cmon-trace={extra[cmon_trace]}",
         level="DEBUG",
         rotation="100 years",
         retention=None,
@@ -264,7 +304,9 @@ def _clog(level: str, msg: str, *args, exception: Optional[Exception] = None):
         logger.warning(f"Invalid log level '{level}', defaulting to INFO: {msg}")
         level_upper = "INFO"
 
-    logger.bind(user=get_user()).opt(depth=2).log(level_upper, msg)
+    logger.bind(user=get_user(), cmon_trace=_cmon_trace).opt(depth=2).log(
+        level_upper, msg
+    )
 
     if level_upper in {"INFO", "SUCCESS", "ERROR"}:
         if _clog_summary:
