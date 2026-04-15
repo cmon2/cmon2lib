@@ -141,3 +141,45 @@ The trace_id enables correlating log entries across multiple script executions (
 - The `_ensure_trace_id()` function (private) handles generation and environment export
 - All log entries within a single process share the same trace_id
 - Note: Env var uses underscore (`cmon_trace`) for cross-language compatibility (Python and Bash)
+
+## Log Status Verification
+
+The `check_script_status()` function enables verification of script execution success via log correlation.
+
+### API
+
+```python
+from cmon2lib.utils.check_script_status import LogStatus, check_script_status
+
+status = check_script_status(script_path: str, trace_id: str) -> LogStatus
+```
+
+### LogStatus Enum
+
+| Value | Description |
+|-------|-------------|
+| `SUCCESS` | No WARN or ERROR found with matching trace_id |
+| `WARNING` | WARN found (no ERROR) |
+| `ERROR` | ERROR found |
+
+### Behavior
+
+1. Searches for `_clog/` directory next to the script
+2. Checks all `*.log` files in `_clog/` for lines matching `| cmon_trace=<trace_id>`
+3. Returns highest severity found (ERROR > WARNING > SUCCESS)
+4. Raises `ValueError` if no logs found with matching trace_id
+
+### CLI
+
+```bash
+cmon check_status <script_path> <trace_id>
+# Exit codes: 0=success, 1=warning, 2=error, 3=not found
+```
+
+### Use Case
+
+Post-clone script verification in simon-distrolocs:
+1. Generate trace_id before running script
+2. Pass `cmon_trace=<trace_id>` env var to script
+3. After script completes, call `check_script_status(script_path, trace_id)`
+4. Log warning/error if verification fails
