@@ -211,7 +211,7 @@ def _write_to_summary(level: str, msg: str):
         user = get_user()
         level_padded = f"{level: <8}"
         # trace_id at end of line for log correlation
-        summary_line = f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg} | cmon-trace={_cmon_trace}\n"
+        summary_line = f"{timestamp} | {level_padded} | {module}:{func}:{line} | {user} | {msg} | cmon_trace={_cmon_trace}\n"
         with open(_clog_summary, "a") as f:
             f.write(summary_line)
 
@@ -265,7 +265,7 @@ def _init_clog():
     # trace_id at end of line for log correlation
     logger.add(
         _clog_archive,
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level:8} | {name}:{line} | {extra[user]} | {message} | cmon-trace={extra[cmon_trace]}",
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level:8} | {name}:{line} | {extra[user]} | {message} | cmon_trace={extra[cmon_trace]}",
         level="DEBUG",
         rotation="100 years",
         retention=None,
