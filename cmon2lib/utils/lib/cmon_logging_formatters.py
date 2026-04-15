@@ -9,7 +9,7 @@ def format_log_record(record: dict) -> str:
         record: Loguru record dict with time, level, name, function, line, extra, message.
 
     Returns:
-        Formatted log line: YYYY-MM-DD HH:mm:ss | LEVEL | module:func:line | USER | message [ | cmon-trace=xxx]
+        Formatted log line: YYYY-MM-DD HH:mm:ss | LEVEL | module:func:line | USER | message [ | cmon_trace=xxx]
     """
     timestamp = record["time"].strftime("%Y-%m-%d %H:%M:%S")
     level = record["level"].name.ljust(8)
@@ -22,7 +22,7 @@ def format_log_record(record: dict) -> str:
 
     base = f"{timestamp} | {level} | {name}:{function}:{line} | {user} | {message}"
     if cmon_trace:
-        base += f" | cmon-trace={cmon_trace}"
+        base += f" | cmon_trace={cmon_trace}"
     return base
 
 

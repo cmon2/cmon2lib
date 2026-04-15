@@ -75,7 +75,7 @@ def _ensure_trace_id():
     """
     Ensure a trace_id exists for log correlation.
 
-    If cmon-trace env var is set, use it. Otherwise, generate a ULID
+    If cmon_trace env var is set, use it. Otherwise, generate a ULID
     (or UUID fallback) and export it to the environment.
     """
     global _cmon_trace
@@ -84,7 +84,7 @@ def _ensure_trace_id():
         return  # Already set
 
     # Check environment first
-    env_trace = os.environ.get("cmon-trace")
+    env_trace = os.environ.get("cmon_trace")
     if env_trace:
         _cmon_trace = env_trace
     else:
@@ -94,7 +94,7 @@ def _ensure_trace_id():
         else:
             _cmon_trace = str(uuid.uuid4())
         # Export for child processes
-        os.environ["cmon-trace"] = _cmon_trace
+        os.environ["cmon_trace"] = _cmon_trace
 
 
 # =============================================================================

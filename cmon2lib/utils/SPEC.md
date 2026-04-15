@@ -51,14 +51,14 @@ When ERROR is logged, the archive file is renamed to draw git attention:
 The format is identical for archive and summary logs:
 
 ```
-{timestamp} | {level:8} | {name}:{line} | {user} | {message} | cmon-trace={cmon_trace}
+{timestamp} | {level:8} | {name}:{line} | {user} | {message} | cmon_trace={cmon_trace}
 ```
 
 **Timestamp format**: `YYYY-MM-DD HH:mm:ss` (24-hour, zero-padded)
 
 **Example**:
 ```
-2026-04-13 14:34:21 | INFO    | __main__:33 | simon | Authenticated user ID: 123 | cmon-trace=01ARZ3NDEKTSV4RRFFQ69G5FA
+2026-04-13 14:34:21 | INFO    | __main__:33 | simon | Authenticated user ID: 123 | cmon_trace=01ARZ3NDEKTSV4RRFFQ69G5FA
 ```
 
 **Note**: The trace_id (`cmon_trace`) appears only in file logs, not console output.
@@ -129,9 +129,9 @@ The trace_id enables correlating log entries across multiple script executions (
 
 ### Behavior
 
-- **Environment variable**: `cmon-trace`
-- **Auto-generation**: If `cmon-trace` is not set when `clog()` is first called, a ULID is automatically generated and exported to `cmon-trace`
-- **Inheritance**: Child processes inherit `cmon-trace` via environment, enabling end-to-end trace correlation
+- **Environment variable**: `cmon_trace`
+- **Auto-generation**: If `cmon_trace` is not set when `clog()` is first called, a ULID is automatically generated and exported to `cmon_trace`
+- **Inheritance**: Child processes inherit `cmon_trace` via environment, enabling end-to-end trace correlation
 - **Format**: ULID (time-ordered, sortable) with fallback to UUID if ULID is unavailable
 - **Scope**: File logs only (console output does not include trace_id)
 
@@ -140,3 +140,4 @@ The trace_id enables correlating log entries across multiple script executions (
 - Trace_id is managed internally; no public `get_trace_id()` function is exposed
 - The `_ensure_trace_id()` function (private) handles generation and environment export
 - All log entries within a single process share the same trace_id
+- Note: Env var uses underscore (`cmon_trace`) for cross-language compatibility (Python and Bash)
