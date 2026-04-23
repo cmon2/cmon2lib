@@ -29,5 +29,5 @@ def cprint(level: str, msg: str, *args):
     if level_upper not in valid_levels:
         level_upper = "INFO"
 
-    # Log to stderr with Rich markup support
-    logger.opt(depth=2).log(level_upper, msg)
+    # Bind user to extra so file handler format strings don't fail with KeyError 'user'
+    logger.bind(user="unknown", cmon_trace="").opt(depth=2).log(level_upper, msg)
